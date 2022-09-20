@@ -127,10 +127,10 @@ void setup()
   Serial.println("\n\n\nDatalogger Starting");
 
   g_rtc = new OvkRtc;
-  if (!g_rtc->isInitNeed()) {
-    Serial.println("\n\n\nInit RTC!");
-    g_rtc->setRtcFromCompilationDateTime();
-  }
+//  if (g_rtc->isInitNeed()) {
+//    Serial.println("\n\n\nInit RTC!");
+//    g_rtc->setRtcFromCompilationDateTime();
+//  }
 
   if (!g_rtc->readToString(tmp, sizeof(tmp))) {
     strcpy(tmp, "RTC Fail");
@@ -183,8 +183,8 @@ void setup()
 void loop()
 {
 
-#define DELTA_PRINT_ms  30000;
-#define DELTA_ACQUIS_ms 10;
+#define DELTA_PRINT_ms  (5*60*1000UL)
+#define DELTA_ACQUIS_ms 10
   static int32_t to = 0;
   static int32_t to_print = -1;
   static float old_adc = -1000;
@@ -194,7 +194,7 @@ void loop()
   if (g_ist_line) {
     g_ist_line = false;
     if (g_rtc->readToString(tmp, sizeof(tmp))) {
-      Serial.println(tmp);
+      //Serial.println(tmp);
       txt += tmp;
       txt += '\n';
     }
@@ -210,7 +210,8 @@ void loop()
   // Timeout print
   bool prn = (millis() >= to_print);
   float adc = (float)analogRead(0);
-  if (abs((adc - old_adc) / (adc + old_adc)) > 0.02) {
+//  if (abs((adc - old_adc) / (adc + old_adc)) > 0.02) {
+  if (abs((adc - old_adc) / adc) > 0.02) {
     // over 2% treshold
     prn = true;
   }

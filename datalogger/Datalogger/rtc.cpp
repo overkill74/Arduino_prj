@@ -175,7 +175,7 @@ bool OvkRtc::isInitNeed()
     return false;
   }
   */
-  return m_rtc->isrunning();
+  return !m_rtc->isrunning();
 }
 //-----------------------------------------------------------------------
 bool OvkRtc::isChipOk()
