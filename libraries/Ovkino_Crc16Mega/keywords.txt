@@ -6,14 +6,17 @@
 # Datatypes (KEYWORD1)
 ########################################
 
-_f16	KEYWORD1
+OvkReflect	KEYWORD1
+OvkCrc16	KEYWORD1
 
 ########################################
 # Methods and Functions (KEYWORD2)
 ########################################
 
-f16ToFloat	KEYWORD2
-floatToF16	KEYWORD2
+calculateCrc    KEYWORD2
+init_table      KEYWORD2
+clear_table     KEYWORD2
+calc_rev_simple KEYWORD2
 
 ########################################
 # Instances (KEYWORD2)
