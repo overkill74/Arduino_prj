@@ -4,7 +4,7 @@
 
 // System Library Include
 #include <Arduino.h>
-#include <HardwareSerial.h>
+#include <Stream.h>
 
 
 // User Library Include
@@ -19,8 +19,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                     P U B L I C   F U N C T I O N S                        //
 ////////////////////////////////////////////////////////////////////////////////
-Terminale::Terminale(const TermCmd* comandi, size_t buff_sz)
+Terminale::Terminale(const TermCmd* comandi, Stream& stream, size_t buff_sz)
   : m_commands(comandi)
+  , m_stream(stream)
   , m_rx_buff_sz(buff_sz)
 {
   if (m_rx_buff_sz < 16) {
@@ -28,7 +29,7 @@ Terminale::Terminale(const TermCmd* comandi, size_t buff_sz)
   }
   m_rx_buffer = new char[m_rx_buff_sz];
   if (!m_rx_buffer) {
-    Serial.println("No buffer for terminal");
+    m_stream.println("No buffer for terminal");
     m_rx_buff_sz = 0;
   }
 }
@@ -36,8 +37,8 @@ Terminale::Terminale(const TermCmd* comandi, size_t buff_sz)
 ////////////////////////////////////////////////////////////////////////////////
 void Terminale::clear_rx()
 {
-  while (Serial.available()) {
-    Serial.read();
+  while (m_stream.available()) {
+    m_stream.read();
   }
   m_cnt = 0;
   m_overflow = false;
@@ -47,14 +48,13 @@ void Terminale::clear_rx()
 ////////////////////////////////////////////////////////////////////////////////
 bool Terminale::rx_command()
 {
-  while (Serial.available()) {
-    char rxc = Serial.read();
-    if (m_cnt < (m_rx_buff_sz-1)) {
+  while (m_stream.available()) {
+    char rxc = m_stream.read();
+    if (m_cnt < (m_rx_buff_sz - 1)) {
       if (rxc >= ' ') {
-	m_rx_buffer[m_cnt++] = rxc;
+        m_rx_buffer[m_cnt++] = rxc;
       }
-    }
-    else {
+    } else {
       m_overflow = true;
     }
     if (rxc == '\n' || rxc == '\r') {
@@ -111,25 +111,21 @@ void Terminale::doWorkAndAnswer()
   if (cmd_idx >= 0) {
     // Esegue il comando
     if (m_commands[cmd_idx].m_func) {
-      int err = m_commands[cmd_idx].m_func(argc, argv);
+      int err = m_commands[cmd_idx].m_func(argc, argv, m_stream);
       if (!err) {
-	Serial.println("*** OK");
+        m_stream.println("*** OK");
+      } else {
+        m_stream.print("*** ERR:");
+        m_stream.println(err);
       }
-      else {
-	Serial.print("*** ERR:");
-	Serial.println(err);
-      }
+    } else {
+      m_stream.println("To be done...");
     }
-    else {
-      Serial.println("To be done...");
-    }
-  }
-  else {
+  } else {
     if (!strcmp(cmd, "HELP") || !strcmp(cmd, "?")) {
       terminal_help();
-    }
-    else {
-      Serial.println("*** INVALID");
+    } else {
+      m_stream.println("*** INVALID");
     }
   }
 
@@ -138,15 +134,15 @@ void Terminale::doWorkAndAnswer()
 
 // void Terminale::doWorkAndAnswer(char* cmd)
 // {
-//   Serial.println("--------------------");
+//   m_stream.println("--------------------");
 //   char* argv[8];
 //   int argc = argSegment(cmd, argv, 8);
 
 //   for (int i = 0; i < argc; ++i) {
-//     Serial.print(i);
-//     Serial.print(" -> '");
-//     Serial.print(argv[i]);
-//     Serial.println("'");
+//     m_stream.print(i);
+//     m_stream.print(" -> '");
+//     m_stream.print(argv[i]);
+//     m_stream.println("'");
 //   }
 
 //   terrminale_help();
@@ -156,22 +152,22 @@ void Terminale::doWorkAndAnswer()
 ////////////////////////////////////////////////////////////////////////////////
 void Terminale::terminal_help()
 {
-  Serial.println("-----------------------------------------------------");
-  Serial.println("List of available commands:");
+  m_stream.println("-----------------------------------------------------");
+  m_stream.println("List of available commands:");
   int i = 0;
   while (m_commands[i].m_name) {
     //        if (is_command_accessible(state, list + i)) {
-    Serial.print(m_commands[i].m_name);
+    m_stream.print(m_commands[i].m_name);
     int spc = 8 - strlen(m_commands[i].m_name);
     while (spc > 0) {
-      Serial.print(' ');
+      m_stream.print(' ');
       --spc;
     }
-    Serial.print(" : ");
+    m_stream.print(" : ");
     if (m_commands[i].m_help) {
-      Serial.print(m_commands[i].m_help);
+      m_stream.print(m_commands[i].m_help);
     }
-    Serial.println("");
+    m_stream.println("");
     ++i;
   }
   //    }

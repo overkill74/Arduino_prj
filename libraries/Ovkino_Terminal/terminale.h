@@ -21,8 +21,11 @@
 
 // Application Local Include
 
+class Stream;
+
+
 /// Command function prototype
-typedef int (*TermCmdFunc)(int argc, char** argv);
+typedef int (*TermCmdFunc)(int argc, char** argv, Stream& str);
 /// Flags
 typedef uint8_t TermAccessFlg;    ///< Terminal access privilege mask
 
@@ -51,7 +54,7 @@ public:
 class Terminale
 {
 public:
-  Terminale(const TermCmd* comandi, size_t buff_sz=128);
+  Terminale(const TermCmd* comandi, Stream& stream, size_t buff_sz=128);
 
   ///
   /// \brief Read linear buffer, parse and answer
@@ -85,6 +88,7 @@ protected:
   
 private:
   const TermCmd*  m_commands;       //! Commands array
+  Stream&         m_stream;         //! The stream device
   char*           m_rx_buffer=0;    //! Rx buffer
   size_t          m_rx_buff_sz;     //! Buffer size
   int             m_cnt;            //! Counter received chars
