@@ -49,3 +49,13 @@ bool SyscoDisplay::drawIp(const uint32_t& ip)
   m_display->display();
 }
 
+bool SyscoDisplay::drawStatus(int line, const char* txt)
+{
+  if (!initDisplay()) { return false; }
+  m_display->setTextSize(2);      // Normal 1:1 pixel scale
+  m_display->setTextColor(SSD1306_WHITE); // Draw white text
+  m_display->setCursor(0, 8*line);     // Start at top-left corner
+  m_display->write(txt);
+  m_display->display();
+}
+

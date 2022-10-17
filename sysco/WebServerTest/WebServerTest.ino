@@ -82,29 +82,34 @@ static void ethernet_maintain()
   switch (Ethernet.maintain()) {
     case 1:
       Serial.println("Error: renewed fail");
+      g_display->drawStatus(2, "Renewed Fail");
       break;
     case 2:
       Serial.println("Renewed success");
       Serial.print("My IP address: ");
       Serial.println(Ethernet.localIP());
       g_display->drawIp(static_cast<uint32_t>(Ethernet.localIP()));
+      g_display->drawStatus(2, "Connected");
       break;
     case 3:
       Serial.println("Error: rebind fail");
+      g_display->drawStatus(2, "Rebind Fail");
       break;
     case 4:
       Serial.println("Rebind success");
       Serial.print("My IP address: ");
       Serial.println(Ethernet.localIP());
       g_display->drawIp(static_cast<uint32_t>(Ethernet.localIP()));
+      g_display->drawStatus(2, "Connected");
       break;
     default:
-      Serial.print('.');
+      //Serial.print('.');
       break;
   }
 }
 
-void loop() {
+void loop()
+{
   ethernet_maintain();
   // listen for incoming clients
   EthernetClient client = server.available();

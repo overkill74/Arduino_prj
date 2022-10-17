@@ -1,5 +1,5 @@
 ########################################
-# Syntax Coloring Map For Ovkino_Float16
+# Syntax Coloring Map For Ovkino_Crc16Mega
 ########################################
 
 ########################################

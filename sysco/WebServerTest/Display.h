@@ -11,6 +11,7 @@ public:
 public:
   bool initDisplay();
   bool drawIp(const uint32_t& ip);
+  bool drawStatus(int line, const char* txt);
 
 protected:
   Adafruit_SSD1306*   m_display;  //! The display
