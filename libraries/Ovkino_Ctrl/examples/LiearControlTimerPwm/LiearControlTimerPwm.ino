@@ -1,9 +1,8 @@
 
-#include <OvkCtrlLinear.h>
+#include <OvkCtrlLinearTimerPwm.h>
 
 // The controller
-static OvkCtrlLinear m_ctrl;
-
+static OvkCtrlLinearTimerPwm m_ctrl(16000000);
 
 void setup()
 {

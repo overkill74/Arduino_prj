@@ -3,6 +3,24 @@
 /// The object has a setpoint and confront it with the current value.
 /// The tick function must be called with a timer and set the PWM out.
 ///
+///                     ^ PWM                                           
+///                     |                                           
+///                     |   ________________________________  P[b]
+///                     |  /|                                           
+///                     | /                                            
+///                     |/  |                                          
+///                     /                                              
+///                    /|   |                                          
+///                   / |
+///                  /  |   |            
+/// P[a] ___________/ _ |                                               
+///                 |   |   |                                            
+///  -------------------+-----------------------------------------------> Delta
+///              D[a]   |   D[b]
+///
+/// Delta = Misura - StPoint
+/// D[a] < D[b]
+///
 
 #ifndef OVK_CTRL_LINEAR_H
 #define OVK_CTRL_LINEAR_H
@@ -20,16 +38,35 @@ public:
 	{
 		void copy(const Config& new_cfg) {
 			memcpy(this, &new_cfg, sizeof(Config));
+      // D[a] < D[b]
+      if (d_a > d_b) {
+        float d_tmp = d_b;
+        float p_tmp = p_b;
+        d_b = d_a;
+        p_b = p_a;
+        d_a = d_tmp;
+        p_a = p_tmp;
+      }
 		}
-		float  coeff_m  = 2.5f;   //! coefficiente m
-		float  coeff_q  = -0.5f;  //! coefficiente q
-		float  setp_min = 10.0f;  //! Min Setpoint
-		float  setp_max = 300.0f; //! Max Setpoint
+		float  d_a = 5.0f;    //! Delta, a
+		float  d_b = 0.0f;    //! Delta, b
+		float  p_a = 100.0f;  //! PWM, a
+		float  p_b = 0.0f;    //! PWM, b
 	};
 	
 public:
   OvkCtrlLinear(const int out_pin=LED_BUILTIN, float setpoint=50.0f);
+public:
+  ///
+  /// \brief Apply output
+  ///
+  virtual void applyOutput();
+  ///
+  /// \brief tick callback
+  ///
+  virtual void doTick();
 
+public:
   ///
   /// \brief read setpoint
   ///
@@ -50,10 +87,6 @@ public:
   ///
   void doWork(float new_temp);
   ///
-  /// \brief tick callback
-  ///
-  void doTick();
-  ///
   /// \brief start PWM
   ///
   void startPwm();
@@ -70,16 +103,17 @@ public:
   ///
   void setCfg(const Config& new_cfg);
 
-private:
+protected:
   const int m_out_pin;              //! Output PIN
-  const int m_pwm_steps;            //! PWM steps
   float     m_setpoint;             //! The current setpoint 
+  int       m_pwm_level   = 0;      //! Out PWM level
 
 private:
   int       m_pwm_cnt     = 0;      //! Step counter
-  int       m_pwm_level   = 0;      //! Out PWM level
   bool      m_is_running  = true;   //! PWM is running
-  Config	m_cfg;					//! The configuration
+  Config	  m_cfg;					        //! The configuration
+  float     m_cm;                   //! m coefficient
+  float     m_cq;                   //! q coefficient
 };
 
 

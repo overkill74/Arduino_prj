@@ -30,10 +30,10 @@ OvkCtrlLinear::Config& OvkCtrlLinear::getCfg()
 void OvkCtrlLinear::setCfg(const Config& new_cfg)
 {
   m_cfg.copy(new_cfg);
-  DBG_PRINT("coeff_m : "); DBG_PRINTLN(m_cfg.coeff_m );
-  DBG_PRINT("coeff_q : "); DBG_PRINTLN(m_cfg.coeff_q );
-  DBG_PRINT("setp_min: "); DBG_PRINTLN(m_cfg.setp_min);
-  DBG_PRINT("setp_max: "); DBG_PRINTLN(m_cfg.setp_max);
+  m_cm = (m_cfg.p_b - m_cfg.p_a) / (m_cfg.d_b - m_cfg.d_a);
+  m_cq = m_cfg.p_a - m_cm * m_cfg.d_a;
+  DBG_PRINT("coeff_m : "); DBG_PRINTLN(m_cm);
+  DBG_PRINT("coeff_q : "); DBG_PRINTLN(m_cq);
 }
 //-------------------------------------------------------------------
 int OvkCtrlLinear::getPwm()
@@ -62,16 +62,11 @@ void OvkCtrlLinear::stopPwm()
 //-------------------------------------------------------------------
 float OvkCtrlLinear::setSetpoint(float new_val)
 {
-  if (isnan(new_val)) { new_val = 25.0f; }
-
-  DBG_PRINT("New: "); DBG_PRINTLN(new_val);
-  DBG_PRINT("Max: "); DBG_PRINTLN(m_cfg.setp_min);
-  DBG_PRINT("Min: "); DBG_PRINTLN(m_cfg.setp_max);
-  
-  if (new_val < m_cfg.setp_min) { new_val = m_cfg.setp_min; }
-  if (new_val > m_cfg.setp_max) { new_val = m_cfg.setp_max; }
-  m_setpoint = new_val;
+  if (!isnan(new_val)) {
+    m_setpoint = new_val;
+  }
   DBG_PRINT("SP : "); DBG_PRINTLN(m_setpoint);
+
   return m_setpoint;
 }
 //-------------------------------------------------------------------
@@ -79,30 +74,34 @@ void OvkCtrlLinear::doWork(float new_temp)
 {
 //  startPwm();
 
-  float delta = m_setpoint - new_temp;
-  DBG_PRINT("new_temp= ");   DBG_PRINTLN(new_temp);
-  DBG_PRINT("Delta   = ");   DBG_PRINTLN(delta);
+  float delta = new_temp - m_setpoint;
+  DBG_PRINTLN("");
+  DBG_PRINT("new_temp= ");   DBG_PRINT(new_temp);
+  DBG_PRINT("\tsetpoint= ");   DBG_PRINT(m_setpoint);
+  DBG_PRINT("\tDelta   = ");   DBG_PRINT(delta);
 
-  int pwm = (int)(delta * m_cfg.coeff_m + m_cfg.coeff_q);
-  if (pwm >= 100) {
-    pwm = 100;
+  if (delta <= m_cfg.d_a) { m_pwm_level = m_cfg.p_a; }
+  else if (delta >= m_cfg.d_b) { m_pwm_level = m_cfg.p_b; }
+  else {
+    m_pwm_level = delta * m_cm + m_cq;
   }
-  if (pwm <= 0) {
-    pwm = 0;
-  }
-  m_pwm_level = pwm;
-  DBG_PRINT("PWM     = ");   DBG_PRINTLN(m_pwm_level);
+  
+  DBG_PRINT("\tPWM     = ");   DBG_PRINT(m_pwm_level);
 }
 //-------------------------------------------------------------------
 void OvkCtrlLinear::doTick()
 {
+  if (++m_pwm_cnt > 100) {
+    m_pwm_cnt = 0;
+  }
+  applyOutput();
+}
+//-------------------------------------------------------------------
+void OvkCtrlLinear::applyOutput()
+{
   if (!m_is_running) {
     digitalWrite(m_out_pin, LOW);
     return;
-  }
-
-  if (++m_pwm_cnt > 100) {
-    m_pwm_cnt = 0;
   }
 
   if (m_pwm_level >= 98) {
@@ -115,3 +114,4 @@ void OvkCtrlLinear::doTick()
     digitalWrite(m_out_pin, (m_pwm_cnt < m_pwm_level));
   }
 }
+
