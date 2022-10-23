@@ -111,7 +111,7 @@ protected:
 private:
   int       m_pwm_cnt     = 0;      //! Step counter
   bool      m_is_running  = true;   //! PWM is running
-  Config	  m_cfg;					        //! The configuration
+  Config    m_cfg;		    //! The configuration
   float     m_cm;                   //! m coefficient
   float     m_cq;                   //! q coefficient
 };

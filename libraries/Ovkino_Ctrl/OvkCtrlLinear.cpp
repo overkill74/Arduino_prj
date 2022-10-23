@@ -24,6 +24,9 @@ OvkCtrlLinear::OvkCtrlLinear(const int out_pin, float setpoint)
 //-------------------------------------------------------------------
 OvkCtrlLinear::Config& OvkCtrlLinear::getCfg()
 {
+  DBG_PRINT("A = "); DBG_PRINT(m_cfg.d_a); DBG_PRINT(", "); DBG_PRINTLN(m_cfg.p_a);
+  DBG_PRINT("B = "); DBG_PRINT(m_cfg.d_b); DBG_PRINT(", "); DBG_PRINTLN(m_cfg.p_b);
+
   return m_cfg;
 }
 //-------------------------------------------------------------------
@@ -32,6 +35,8 @@ void OvkCtrlLinear::setCfg(const Config& new_cfg)
   m_cfg.copy(new_cfg);
   m_cm = (m_cfg.p_b - m_cfg.p_a) / (m_cfg.d_b - m_cfg.d_a);
   m_cq = m_cfg.p_a - m_cm * m_cfg.d_a;
+  DBG_PRINT("A = "); DBG_PRINT(m_cfg.d_a); DBG_PRINT(", "); DBG_PRINTLN(m_cfg.p_a);
+  DBG_PRINT("B = "); DBG_PRINT(m_cfg.d_b); DBG_PRINT(", "); DBG_PRINTLN(m_cfg.p_b);
   DBG_PRINT("coeff_m : "); DBG_PRINTLN(m_cm);
   DBG_PRINT("coeff_q : "); DBG_PRINTLN(m_cq);
 }
@@ -86,7 +91,11 @@ void OvkCtrlLinear::doWork(float new_temp)
     m_pwm_level = delta * m_cm + m_cq;
   }
   
-  DBG_PRINT("\tPWM     = ");   DBG_PRINT(m_pwm_level);
+  DBG_PRINT("\tPWM     = ");   DBG_PRINTLN(m_pwm_level);
+  DBG_PRINT("A = "); DBG_PRINT(m_cfg.d_a); DBG_PRINT(", "); DBG_PRINTLN(m_cfg.p_a);
+  DBG_PRINT("B = "); DBG_PRINT(m_cfg.d_b); DBG_PRINT(", "); DBG_PRINTLN(m_cfg.p_b);
+  DBG_PRINT("coeff_m : "); DBG_PRINTLN(m_cm);
+  DBG_PRINT("coeff_q : "); DBG_PRINTLN(m_cq);
 }
 //-------------------------------------------------------------------
 void OvkCtrlLinear::doTick()

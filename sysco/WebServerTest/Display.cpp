@@ -38,6 +38,16 @@ bool SyscoDisplay::initDisplay()
   return m_is_init;
 }
 //--------------------------------------------------------------------------------
+void SyscoDisplay::updateBegin()
+{
+  m_display->clearDisplay();
+}
+//--------------------------------------------------------------------------------
+void SyscoDisplay::updateEnd()
+{
+  m_display->display();
+}
+//--------------------------------------------------------------------------------
 bool SyscoDisplay::drawIp(const uint32_t& ip)
 {
   m_display->setTextSize(1);      // Normal 1:1 pixel scale
@@ -55,13 +65,10 @@ bool SyscoDisplay::drawIp(const uint32_t& ip)
 //--------------------------------------------------------------------------------
 bool SyscoDisplay::drawSetPoint(const float val)
 {
-  m_display->clearDisplay();
-  m_display->display();
   m_display->setTextSize(3);
   m_display->setTextColor(SSD1306_WHITE);
   m_display->setCursor(0, 10);
   m_display->write(to_celsius(val));
-  m_display->display();
 }
 //--------------------------------------------------------------------------------
 bool SyscoDisplay::drawTemperature(const float val)
@@ -69,10 +76,17 @@ bool SyscoDisplay::drawTemperature(const float val)
   m_display->setTextSize(3);
   m_display->setTextColor(SSD1306_WHITE);
   m_display->setCursor(0, 10+3*8);
-  m_display->write("    ");
-  m_display->display();
   m_display->setCursor(0, 10+3*8);
   m_display->write(to_celsius(val));
+}
+//--------------------------------------------------------------------------------
+bool SyscoDisplay::drawStatus(int line, const char* txt)
+{
+  if (!initDisplay()) { return false; }
+  m_display->setTextSize(2);
+  m_display->setTextColor(SSD1306_WHITE);
+  m_display->setCursor(0, 8*line);
+  m_display->write(txt);
   m_display->display();
 }
 //--------------------------------------------------------------------------------
@@ -126,15 +140,5 @@ SyscoDisplay* SyscoDisplay::createInstance(uint8_t iic_addr, uint8_t w, uint8_t 
 SyscoDisplay* SyscoDisplay::getInstance()
 {
   return m_instance;
-}
-
-bool SyscoDisplay::drawStatus(int line, const char* txt)
-{
-  if (!initDisplay()) { return false; }
-  m_display->setTextSize(2);      // Normal 1:1 pixel scale
-  m_display->setTextColor(SSD1306_WHITE); // Draw white text
-  m_display->setCursor(0, 8*line);     // Start at top-left corner
-  m_display->write(txt);
-  m_display->display();
 }
 

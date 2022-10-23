@@ -4,6 +4,7 @@
 #include "SyscoEth.h"
 #include "SyscoTempCtrl.h"
 #include "SyscoTerminal.h"
+#include "SysCfg.h"
 
 //--------------------------------------------------------------------------------
 void setup()
@@ -12,12 +13,17 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
   Serial.println("Welcome to Sysco Temperature Controller");
+  // System config
+  SysCfg::createInstance();
+  // Terminale
+  SyscoTerminal::createInstance(Serial);
   // Display
   SyscoDisplay* dysp = SyscoDisplay::createInstance(0x3C, 128, 64);
   dysp->drawSetPoint(21.5);
   dysp->drawTemperature(18.7);
   // Tmperature Control
   SyscoTempCtrl::createInstance(39, 47);
+
 }
 //--------------------------------------------------------------------------------
 void loop()
@@ -32,12 +38,13 @@ void loop()
 
   uint32_t now = millis();
   
+  // For Display
+  static float setpoit = 0.0f;
+
   // Update Measure
   if (now > tout_1_sec) {
     tout_1_sec += delay_1_sec;
-    float setpoit = temp_ctrl->doWork();
-    SyscoDisplay* dysp = SyscoDisplay::getInstance();
-    if (dysp) { dysp->drawSetPoint(setpoit); }
+    temp_ctrl->doWork();
   }
 
   // Update_PWM
@@ -45,5 +52,15 @@ void loop()
     tout_pwm += delay_pwm;
     temp_ctrl->doTick();
   }
+
+  // Update display
+  SyscoDisplay* dysp = SyscoDisplay::getInstance();
+  dysp->updateBegin();
+  dysp->drawSetPoint(temp_ctrl->getSetpoint());
+  dysp->drawTemperature(temp_ctrl->getTmeperature());
+  dysp->updateEnd();
+
+  // Terminale
+  SyscoTerminal::getInstance()->doWork();
 }
 

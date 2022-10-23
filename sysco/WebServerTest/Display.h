@@ -14,6 +14,8 @@ public:
 
 public:
   bool initDisplay();
+  void updateBegin();
+  void updateEnd();
   bool drawIp(const uint32_t& ip);
   bool drawSetPoint(const float val);
   bool drawTemperature(const float val);
