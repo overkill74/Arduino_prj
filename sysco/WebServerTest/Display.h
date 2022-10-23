@@ -21,6 +21,7 @@ public:
 private:
   SyscoDisplay(uint8_t iic_addr, uint8_t w, uint8_t h);
   const char* to_celsius(float deg_c);
+  bool drawStatus(int line, const char* txt);
 
 protected:
   Adafruit_SSD1306*   m_display;  //! The display
