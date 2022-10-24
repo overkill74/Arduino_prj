@@ -19,6 +19,7 @@ public:
   bool drawIp(const uint32_t& ip);
   bool drawSetPoint(const float val);
   bool drawTemperature(const float val);
+  bool drawPwmOut(const float val);
 
 private:
   SyscoDisplay(uint8_t iic_addr, uint8_t w, uint8_t h);

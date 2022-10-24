@@ -4,24 +4,24 @@
 #include "SyscoTempCtrl.h"
 #include "SysCfg.h"
 
-//OvkCtrlLinear g_ctrl_res(39, 25.0f);
-//OvkCtrlLinear g_ctrl_fan(47, 25.0f);
+#include <OvkCtrlLinear.h>
+#include <OvkCtrlLinearPwm.h>
 
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
-SyscoTempCtrl::SyscoTempCtrl(const int pin_r, const int pin_ev)
+SyscoTempCtrl::SyscoTempCtrl(const int pin_r, const int pin_fan, const int pin_ev, const int pin_in_0_10)
   : m_pin_out_res(pin_r)
+  , m_pin_pwm_fan(pin_fan)
   , m_pin_out_ev(pin_ev)
+  , m_pin_in_0_10(pin_in_0_10)
 {
   // PINS
-  pinMode(pin_r, OUTPUT);
   pinMode(pin_ev, OUTPUT);
-  digitalWrite(pin_r, LOW);
   digitalWrite(pin_ev, LOW);
 
   // Controllers
-  m_ctrl_res = new OvkCtrlLinear(m_pin_out_res, 25.0f);
-  m_ctrl_fan = new OvkCtrlLinear(m_pin_out_ev, 25.0f);
+  m_ctrl_res = new OvkCtrlLinear(m_pin_out_res);
+  m_ctrl_fan = new OvkCtrlLinearPwm(m_pin_pwm_fan);
 
   // Riscaldatore
   OvkCtrlLinear::Config& cfg_r = m_ctrl_res->getCfg();
@@ -71,6 +71,7 @@ void SyscoTempCtrl::doWork()
   else {
     m_temperature = m_temperature * 0.9f + kelvin_10 * (0.1f / 10.0f);
   }
+  // Apply
   m_ctrl_res->doWork(m_temperature);
   m_ctrl_fan->doWork(m_temperature);
 }
@@ -78,16 +79,44 @@ void SyscoTempCtrl::doWork()
 void SyscoTempCtrl::doTick()
 {
   m_ctrl_res->doTick();
-  m_ctrl_fan->doTick();
+
+  if (m_ctrl_res->getPwm() > 0) {
+    // Sto Riscaldando
+    analogWrite(m_pin_pwm_fan, 255);
+    digitalWrite(m_pin_out_ev, LOW);
+  }
+  else {
+    // Sto raffreddando
+    m_ctrl_fan->doTick();
+
+    // Apertura Elettrovalvola
+    if (m_ctrl_fan->getPwm() > 0) {
+      digitalWrite(m_pin_out_ev, HIGH);
+    }
+    else {
+      digitalWrite(m_pin_out_ev, LOW);
+    }
+  }
+
+
+  // Read out 0-10
+  int val = analogRead(m_pin_in_0_10);
+  float mv = (float)val * (4.24f * 5000.0f / 1024.0f);
+  if (m_mv_out_fan < -10.0f) {
+    m_mv_out_fan = mv;    
+  }
+  else {
+    m_mv_out_fan = m_mv_out_fan*0.9 + mv *0.1;
+  }
 }
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 SyscoTempCtrl* SyscoTempCtrl::m_instance = nullptr;
 //--------------------------------------------------------------------------------
-SyscoTempCtrl* SyscoTempCtrl::createInstance(const int pin_r, const int pin_ev)
+SyscoTempCtrl* SyscoTempCtrl::createInstance(const int pin_r, const int pin_fan, const int pin_ev, const int pin_in_0_10)
 {
   if (!m_instance) {
-    m_instance = new SyscoTempCtrl(pin_r, pin_ev);
+    m_instance = new SyscoTempCtrl(pin_r, pin_fan, pin_ev, pin_in_0_10);
   }
   return m_instance;
 }

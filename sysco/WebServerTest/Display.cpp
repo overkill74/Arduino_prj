@@ -1,7 +1,4 @@
-#include "HardwareSerial.h"
-#include <avr/pgmspace.h>
 #include "Display.h"
-//#include <cstdio>
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -76,9 +73,17 @@ bool SyscoDisplay::drawTemperature(const float val)
   m_display->setTextSize(3);
   m_display->setTextColor(SSD1306_WHITE);
   m_display->setCursor(0, 10+3*8);
-  m_display->setCursor(0, 10+3*8);
   m_display->write(to_celsius(val));
 }
+//--------------------------------------------------------------------------------
+bool SyscoDisplay::drawPwmOut(const float val)
+{
+  m_display->setTextSize(1);
+  m_display->setTextColor(SSD1306_WHITE);
+  m_display->setCursor(80, 10+3*8);
+  m_display->write(to_celsius(val/1000.0f));
+}
+
 //--------------------------------------------------------------------------------
 bool SyscoDisplay::drawStatus(int line, const char* txt)
 {

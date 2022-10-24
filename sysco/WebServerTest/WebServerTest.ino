@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#include <string.h>
 
 // Display
 #include "Display.h"
@@ -22,7 +24,7 @@ void setup()
   dysp->drawSetPoint(21.5);
   dysp->drawTemperature(18.7);
   // Tmperature Control
-  SyscoTempCtrl::createInstance(39, 47);
+  SyscoTempCtrl::createInstance(39, 10, 47, A0);
 
 }
 //--------------------------------------------------------------------------------
@@ -57,7 +59,8 @@ void loop()
   SyscoDisplay* dysp = SyscoDisplay::getInstance();
   dysp->updateBegin();
   dysp->drawSetPoint(temp_ctrl->getSetpoint());
-  dysp->drawTemperature(temp_ctrl->getTmeperature());
+  dysp->drawTemperature(temp_ctrl->getTemperature());
+  dysp->drawPwmOut(temp_ctrl->getOutFanValue());
   dysp->updateEnd();
 
   // Terminale
