@@ -6,7 +6,11 @@
 #include "SyscoEth.h"
 #include "SyscoTempCtrl.h"
 #include "SyscoTerminal.h"
+#include "SyscoTermostatoIvan.h"
 #include "SysCfg.h"
+
+//--------------------------------------------------------------------------------
+static SyscoTermostatoIvan g_termostato;
 
 //--------------------------------------------------------------------------------
 void setup()
@@ -15,6 +19,8 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
   Serial.println("Welcome to Sysco Temperature Controller");
+  // Termostato
+  g_termostato.begin();
   // System config
   SysCfg::createInstance();
   // Terminale
@@ -43,10 +49,12 @@ void loop()
   // For Display
   static float setpoit = 0.0f;
 
+  g_termostato.doWork();
+
   // Update Measure
   if (now > tout_1_sec) {
     tout_1_sec += delay_1_sec;
-    temp_ctrl->doWork();
+    temp_ctrl->doWork(g_termostato.getSetPoint(), g_termostato.getTemperature());
   }
 
   // Update_PWM

@@ -1,6 +1,5 @@
 
 //--------------------------------------------------------------------------------
-
 class OvkCtrlLinear;
 
 //--------------------------------------------------------------------------------
@@ -11,7 +10,7 @@ public:
   static SyscoTempCtrl* getInstance();
 
 public:
-  void doWork();
+  void doWork(float setpoint, float temperature);
   void doTick();
   float getSetpoint() { return m_setpoint; }
   float getTemperature() { return m_temperature; }

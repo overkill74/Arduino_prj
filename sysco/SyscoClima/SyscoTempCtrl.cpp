@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "Arduino.h"
 
 //--------------------------------------------------------------------------------
@@ -53,51 +54,75 @@ SyscoTempCtrl::SyscoTempCtrl(const int pin_r, const int pin_fan, const int pin_e
 }
 
 //--------------------------------------------------------------------------------
-void SyscoTempCtrl::doWork()
+void SyscoTempCtrl::doWork(float setpoint, float temperature)
 {
   // Read Setpoint
-  int val = analogRead(A4);
-  m_setpoint = 15.0f + (15.0f/1020.0f) * (float)val;
-  m_ctrl_res->setSetpoint(m_setpoint);
-  m_ctrl_fan->setSetpoint(m_setpoint);
+  // int val = analogRead(A4);
+  // m_setpoint = 15.0f + (15.0f/1020.0f) * (float)val;
 
-  // Read temperature
-  val = analogRead(A1);
-  float mv = (float)val * (5000.0f / 1024.0f);
-  float kelvin_10 = mv - 2731.5f + SysCfg::getInstance()->getParam_t_offset();
-  if (m_temperature < -20.0f) {
-    m_temperature = kelvin_10 / 10.0f;
+  // // Read temperature
+  // val = analogRead(A1);
+  // float mv = (float)val * (5000.0f / 1024.0f);
+  // float kelvin_10 = mv - 2731.5f + SysCfg::getInstance()->getParam_t_offset();
+  // if (m_temperature < -20.0f) {
+  //   m_temperature = kelvin_10 / 10.0f;
+  // }
+  // else {
+  //   m_temperature = m_temperature * 0.9f + kelvin_10 * (0.1f / 10.0f);
+  // }
+
+  if (setpoint < -10.0f || setpoint > 100.0f) {
+    m_setpoint = -1000.0f;
   }
   else {
-    m_temperature = m_temperature * 0.9f + kelvin_10 * (0.1f / 10.0f);
+    m_setpoint = setpoint;
   }
+  if (temperature < -10.0f || temperature > 100.0f) {
+    m_temperature = -1000.0f;
+  }
+  else {
+    m_temperature = temperature;
+  }
+
+//  Serial.print("i_sp :"); Serial.print(i_sp); Serial.print(" -> '"); Serial.print(rx_sp); Serial.println("'");
+
+
   // Apply
+  m_ctrl_res->setSetpoint(m_setpoint);
+  m_ctrl_fan->setSetpoint(m_setpoint);
   m_ctrl_res->doWork(m_temperature);
   m_ctrl_fan->doWork(m_temperature);
 }
 //--------------------------------------------------------------------------------
 void SyscoTempCtrl::doTick()
 {
-  m_ctrl_res->doTick();
-
-  if (m_ctrl_res->getPwm() > 0) {
-    // Sto Riscaldando
-    analogWrite(m_pin_pwm_fan, 255);
+  if (m_temperature < -100.0f || m_setpoint < -100.0f) {
+    // Invalid values
+    analogWrite(m_pin_pwm_fan, 0);
     digitalWrite(m_pin_out_ev, LOW);
+    digitalWrite(m_pin_out_res, LOW);
   }
   else {
-    // Sto raffreddando
-    m_ctrl_fan->doTick();
+    m_ctrl_res->doTick();
 
-    // Apertura Elettrovalvola
-    if (m_ctrl_fan->getPwm() > 0) {
-      digitalWrite(m_pin_out_ev, HIGH);
-    }
-    else {
+    if (m_ctrl_res->getPwm() > 0) {
+      // Sto Riscaldando
+      analogWrite(m_pin_pwm_fan, 255);
       digitalWrite(m_pin_out_ev, LOW);
     }
-  }
+    else {
+      // Sto raffreddando
+      m_ctrl_fan->doTick();
 
+      // Apertura Elettrovalvola
+      if (m_ctrl_fan->getPwm() > 0) {
+        digitalWrite(m_pin_out_ev, HIGH);
+      }
+      else {
+        digitalWrite(m_pin_out_ev, LOW);
+      }
+    }
+  }
 
   // Read out 0-10
   int val = analogRead(m_pin_in_0_10);
