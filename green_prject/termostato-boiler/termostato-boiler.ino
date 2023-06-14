@@ -15,7 +15,7 @@ ESP8266WebServer server(80);
 // Variabile per lo stato del LED
 bool ledState = false;
 
-#if 0
+#if 1
 
 // Funzione per la gestione della richiesta HTTP GET
 void handleRoot() {
@@ -79,7 +79,7 @@ void loop() {
   }
 }
 
-#endif
+#else
 
 // Variabile per la luminosità del LED
 int brightness = 128;
@@ -161,3 +161,4 @@ void loop() {
   // Gestione delle richieste HTTP
   server.handleClient();
 }
+#endif
