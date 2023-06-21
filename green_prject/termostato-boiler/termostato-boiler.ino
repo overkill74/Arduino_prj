@@ -16,6 +16,7 @@ const char* password = "Su2r9s59Zy";
 
 // Dichiarazioni delle costanti per il server web
 ESP8266WebServer server(80);
+ESP8266WebServer server_ext(1080);
 TWater g_twat(SENSOR_DATA);
 WebTime g_web_time;
 
@@ -33,6 +34,9 @@ static void reload_page()
 {
   server.sendHeader("Location", "/");
   server.send(302, "text/plain", "");
+
+  server_ext.sendHeader("Location", "/");
+  server_ext.send(302, "text/plain", "");
 }
 
 /// \brief Incrementa il setpoint
@@ -93,6 +97,7 @@ void handleRoot()
   html += "<button onclick=\"location.href='/toggle'\">Accendi/Spegni</button></body></html>";
 
   server.send(200, "text/html", html);
+  server_ext.send(200, "text/html", html);
 }
 
 
@@ -149,8 +154,14 @@ void setup()
   server.on("/setpoint_inc", setpointInc);
   server.on("/setpoint_dec", setpointDec);
 
+  server_ext.on("/", handleRoot);
+  server_ext.on("/toggle", toggleLED);
+  server_ext.on("/setpoint_inc", setpointInc);
+  server_ext.on("/setpoint_dec", setpointDec);
+
   // Avvio del server HTTP
   server.begin();
+  server_ext.begin();
 
   // Connessione alla rete WiFi
   WiFi.begin(ssid, password);
@@ -171,6 +182,7 @@ void loop()
 
   // Gestione delle richieste HTTP
   server.handleClient();
+  server_ext.handleClient();
 
   // Controllo dello stato del bottone
   if (digitalRead(BUTTON_PIN) == LOW) {
