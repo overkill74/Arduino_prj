@@ -44,12 +44,27 @@ void setup()
 void loop()
 {
   static uint32_t onesec = 0;
+  static int delay_send = 5;
   while (millis() < onesec);
-  onesec+=2500;
+  onesec+=1000;
   //--------------------------------------
   // Read Setpoint
   int val = analogRead(A2);
   float setpoint = 15.0f + (15.0f/1020.0f) * (float)val;
+  static float old_setpoint = -1.0f;
+
+  if (fabs(old_setpoint - setpoint) > 2) {
+    delay_send = 0;
+  }
+
+  if (delay_send) {
+    --delay_send;
+    return;
+  }
+
+  delay_send = 5;
+  old_setpoint = setpoint;
+
   sensore.requestTemperatures();
   float temperature = sensore.getTempCByIndex(0) - 3.0f;
 
@@ -59,16 +74,16 @@ void loop()
   while(t.length() < 6) { t='0' + t; }
 
   digitalWrite(2, HIGH);  // Tx
-  delay(100);
+  delay(10);
   Serial.println();
-  delay(100);
+  delay(10);
   Serial.println();
-  delay(100);
+  delay(30);
   Serial.print("$$");
   Serial.print(s);
   Serial.print(t);
   Serial.println();
-  delay(100);
+  delay(50);
   digitalWrite(2, LOW);  // Tx
   //return;
 
