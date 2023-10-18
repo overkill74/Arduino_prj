@@ -27,12 +27,13 @@ float TWater::readTemperature()
   if (tmp < -120) {
     Serial.println(" Init sensor!");
     init_sensor();
+    return tmp;
   }
   else {
     m_old_temp = tmp;
   }
 
-#if DEBUG_ME == 1
+#ifdef DEBUG_ME
   Serial.print("Temperatura: ");
   Serial.print(m_old_temp);
   Serial.println(" °C");

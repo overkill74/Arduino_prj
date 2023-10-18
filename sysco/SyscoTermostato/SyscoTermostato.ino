@@ -6,7 +6,7 @@
 #include <DallasTemperature.h>
 
 // Display
-#include "Display.h"
+//#include "Display.h"
 
 //--------------------------------------------------------------------------------
 OneWire oneWire(A0); 
@@ -24,21 +24,21 @@ void setup()
   digitalWrite(2, HIGH);  // Tx
   //--------------------------------------
   // Display
-  SyscoDisplay* dysp = SyscoDisplay::createInstance(0x3C, 128, 64);
-  dysp->drawSetPoint(21.5);
-  dysp->drawTemperature(18.7);
-  dysp->updateEnd();
+  // SyscoDisplay* dysp = SyscoDisplay::createInstance(0x3C, 128, 64);
+  // dysp->drawSetPoint(21.5);
+  // dysp->drawTemperature(18.7);
+  // dysp->updateEnd();
   //--------------------------------------
   // Local Setpoint
-  pinMode(A1, OUTPUT);
-  pinMode(A3, OUTPUT);
-  digitalWrite(A1, LOW);
-  digitalWrite(A3, HIGH);
+  // pinMode(A1, OUTPUT);
+  // pinMode(A3, OUTPUT);
+  // digitalWrite(A1, LOW);
+  // digitalWrite(A3, HIGH);
   //--------------------------------------
   // Sensore
   sensore.begin();
-  pinMode(3, OUTPUT);
-  digitalWrite(3, HIGH);
+  // pinMode(3, OUTPUT);
+  // digitalWrite(3, HIGH);
 }
 //--------------------------------------------------------------------------------
 void loop()
@@ -63,11 +63,11 @@ void loop()
   Serial.println();
   //return;
 
-  SyscoDisplay* dysp = SyscoDisplay::getInstance();
-  dysp->updateBegin();
-  dysp->drawSetPoint(setpoint);
-  dysp->drawTemperature(temperature);
-  dysp->updateEnd();
+  // SyscoDisplay* dysp = SyscoDisplay::getInstance();
+  // dysp->updateBegin();
+  // dysp->drawSetPoint(setpoint);
+  // dysp->drawTemperature(temperature);
+  // dysp->updateEnd();
 
 }
 
