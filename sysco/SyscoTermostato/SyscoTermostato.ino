@@ -45,22 +45,31 @@ void loop()
 {
   static uint32_t onesec = 0;
   while (millis() < onesec);
-  onesec+=1000;
+  onesec+=2500;
   //--------------------------------------
   // Read Setpoint
   int val = analogRead(A2);
   float setpoint = 15.0f + (15.0f/1020.0f) * (float)val;
   sensore.requestTemperatures();
-  float temperature = sensore.getTempCByIndex(0);
+  float temperature = sensore.getTempCByIndex(0) - 3.0f;
 
   String s = String((int)(setpoint*100.0f));
   String t = String((int)(temperature*100.0f));
   while(s.length() < 6) { s='0' + s; }
   while(t.length() < 6) { t='0' + t; }
+
+  digitalWrite(2, HIGH);  // Tx
+  delay(100);
+  Serial.println();
+  delay(100);
+  Serial.println();
+  delay(100);
   Serial.print("$$");
   Serial.print(s);
   Serial.print(t);
   Serial.println();
+  delay(100);
+  digitalWrite(2, LOW);  // Tx
   //return;
 
   // SyscoDisplay* dysp = SyscoDisplay::getInstance();
