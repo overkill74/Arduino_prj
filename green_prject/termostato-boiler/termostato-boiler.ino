@@ -9,6 +9,20 @@
 
 class StoredData
 {
+private:
+  class StoreVariables {
+    public:
+      float     m_set_point = 35;         //! Set point temperatura
+      float     m_set_point_doccia = 45;  //! Set point temperatura doccia
+      uint32_t  m_energy = 0;             //! Energy
+      union Flags {
+        struct {
+          uint32_t    is_dst  : 1;        //! Is Daylight saving time
+        } b;
+        uint32_t all;
+      } flags;
+  };
+
 public:
   StoredData() {
   }
@@ -21,39 +35,39 @@ public:
   ///
   /// \brief 
   float incSetPoint() {
-    if (m_set_point >= m_max_temp) {
-      m_set_point = m_max_temp;
+    if (m_stored_vars.m_set_point >= m_max_temp) {
+      m_stored_vars.m_set_point = m_max_temp;
     }
     else {
-      m_set_point += 1;
+      m_stored_vars.m_set_point += 1;
     }
     store_data();
-    return m_set_point;
+    return m_stored_vars.m_set_point;
   }
   ///
   /// \brief 
   float incSetPointDoccia() {
-    if (m_set_point_doccia >= m_max_temp) {
-      m_set_point_doccia = m_max_temp;
+    if (m_stored_vars.m_set_point_doccia >= m_max_temp) {
+      m_stored_vars.m_set_point_doccia = m_max_temp;
     }
     else {
-      m_set_point_doccia += 1;
+      m_stored_vars.m_set_point_doccia += 1;
     }
     store_data();
-    return m_set_point_doccia;
+    return m_stored_vars.m_set_point_doccia;
   }
   ///
   /// \brief 
-  float incEnergy(uint32_t delta) {
-    m_energy += m_r_pow * delta;
+  uint32_t incEnergy(uint32_t delta) {
+    m_stored_vars.m_energy += delta / 100;
     if (++m_cnt_store_energy >= 5*60) {
       store_data();
     }
-    Serial.print("Energy : ");
-    Serial.println(m_energy);
-    Serial.print("m_cnt_store_energy : ");
-    Serial.println(m_cnt_store_energy);
-    return m_energy;
+    // Serial.print("Energy : ");
+    // Serial.println(m_energy);
+    // Serial.print("m_cnt_store_energy : ");
+    // Serial.println(m_cnt_store_energy);
+    return m_stored_vars.m_energy;
   }
   ///
   /// \brief 
@@ -63,88 +77,86 @@ public:
   ///
   /// \brief 
   void resetEnergy() {
-    m_energy = 0;
+    m_stored_vars.m_energy = 0;
     store_data();
   }
 
   ///
   /// \brief 
   float decSetPoint() {
-    if (m_set_point <= m_min_temp) {
-      m_set_point = m_min_temp;
+    if (m_stored_vars.m_set_point <= m_min_temp) {
+      m_stored_vars.m_set_point = m_min_temp;
     }
     else {
-      m_set_point -= 1;
+      m_stored_vars.m_set_point -= 1;
     }
     store_data();
-    return m_set_point;
+    return m_stored_vars.m_set_point;
   }
   ///
   /// \brief 
   float decSetPointDoccia() {
-    if (m_set_point_doccia <= m_min_temp) {
-      m_set_point_doccia = m_min_temp;
+    if (m_stored_vars.m_set_point_doccia <= m_min_temp) {
+      m_stored_vars.m_set_point_doccia = m_min_temp;
     }
     else {
-      m_set_point_doccia -= 1;
+      m_stored_vars.m_set_point_doccia -= 1;
     }
     store_data();
-    return m_set_point_doccia;
+    return m_stored_vars.m_set_point_doccia;
+  }
+  ///
+  /// \brief 
+  bool toggleIsDst() {
+    m_stored_vars.flags.b.is_dst ^= 1;
+    return m_stored_vars.flags.b.is_dst;
   }
   ///
   /// \brief 
   float getSetPoint() {
-    return m_set_point;
+    return m_stored_vars.m_set_point;
   }
   ///
   /// \brief 
   float getSetPointDoccia() {
-    return m_set_point_doccia;
+    return m_stored_vars.m_set_point_doccia;
   }
   ///
   /// \brief 
   float getEnergy() {
-    return (float)((m_energy + 500) / 1000) / 3600.0f;
+    return (float)(((m_stored_vars.m_energy + 500) / 10) / 3600.0f) * m_r_pow;
+  }
+  ///
+  /// \brief 
+  bool isDst() {
+    return m_stored_vars.flags.b.is_dst;
   }
 
 private:
-  void wr_float(int ee, float value) {
-    byte* p = (byte*)(void*)&value;
-    for (int i = 0; i < sizeof(value); i++) {
+  void store_data() {
+    int ee = 0;
+    byte* p = (byte*)(void*)&m_stored_vars;
+    for (int i = 0; i < sizeof(m_stored_vars); i++) {
       EEPROM.write(ee++, *p++);
     }
     EEPROM.commit();  // Salva effettivamente i dati
-  }
-
-  float rd_float(int ee) {
-    float value;
-    byte* p = (byte*)(void*)&value;
-    for (int i = 0; i < sizeof(value); i++) {
-      *p++ = EEPROM.read(ee++);
-    }
-    return value;
-  }
-
-  void store_data() {
-    wr_float(0, m_set_point);
-    wr_float(4, m_set_point_doccia);
-    wr_float(8, m_energy);
     m_cnt_store_energy = 0;
   }
 
   void read_data() {
-    m_set_point = rd_float(0);
-    m_set_point_doccia = rd_float(4);
-    m_energy = rd_float(8);
-
-    if (isnan(m_set_point)) m_set_point = 35;
-    if (isnan(m_set_point_doccia)) m_set_point_doccia = 45;
-    if (isnan(m_energy)) m_energy = 0;
+    int ee = 0;
+    byte* p = (byte*)(void*)&m_stored_vars;
+    for (int i = 0; i < sizeof(m_stored_vars); i++) {
+      *p++ = EEPROM.read(ee++);
+    }
+    if (isnan(m_stored_vars.m_set_point)) m_stored_vars.m_set_point = 35;
+    if (isnan(m_stored_vars.m_set_point_doccia)) m_stored_vars.m_set_point_doccia = 45;
+    if (m_stored_vars.m_energy == 0xFFFFFFFF) m_stored_vars.m_energy = 0;
     
-    if (m_set_point < m_min_temp) m_set_point = 35;
-    if (m_set_point > m_max_temp) m_set_point = 35;
-    if (m_set_point_doccia < m_min_temp) m_set_point_doccia = 45;
-    if (m_set_point_doccia > m_max_temp) m_set_point_doccia = 45;
+    if (m_stored_vars.m_set_point < m_min_temp) m_stored_vars.m_set_point = 35;
+    if (m_stored_vars.m_set_point > m_max_temp) m_stored_vars.m_set_point = 35;
+    if (m_stored_vars.m_set_point_doccia < m_min_temp) m_stored_vars.m_set_point_doccia = 45;
+    if (m_stored_vars.m_set_point_doccia > m_max_temp) m_stored_vars.m_set_point_doccia = 45;
 /*
     Serial.print("m_set_point        : "); Serial.println(m_set_point); 
     Serial.print("m_set_point_doccia : "); Serial.println(m_set_point_doccia); 
@@ -154,11 +166,9 @@ private:
   }
 
 private:
-  float m_set_point = 35;         //! Set point temperatura
-  float m_set_point_doccia = 45;  //! Set point temperatura doccia
-  uint32_t m_energy = 0;             //! Energy
+  StoreVariables  m_stored_vars;  //! Store variables
 
-  int m_cnt_store_energy = 0;     //!
+  int m_cnt_store_energy = 0;     //! Counter to store updated energy
   const float m_max_temp = 55;    //! Massimo setpoint
   const float m_min_temp = 5;     //! Minimo setpoint
   const float m_r_pow = 1200;     //! Power consumed by resistance
@@ -256,6 +266,13 @@ void resetEnergy()
   reload_page();
 }
 
+/// \brief Toggle DST
+void toggleDst()
+{
+  g_web_time.setDst(g_store_data.toggleIsDst());
+  reload_page();
+}
+
 // Funzione per la gestione della richiesta HTTP GET
 void handleRoot()
 {
@@ -263,11 +280,38 @@ void handleRoot()
   "<head>"
   "<title>Boiler del bagno</title>"
   "<meta http-equiv=\"refresh\" content=\"5\">"
+  "<style>"
+  "  table {"
+  "    border-collapse: separate;"
+  "    border-spacing: 10px;"
+  //"    background-color: lightgray;"
+  "    text-align: left;"
+  //"    border: 1px solid black;"
+  "    font-size: 25px;"
+  "  }"
+  "  tr {"
+  "    height: 30px;"
+  "  }"
+  "  td {"
+  "    padding: 0px 0px 0px 30px ;"
+  "  }"
+  "  td:first-child {"
+  "    padding-left: 0;"
+  "  }"
+  "</style>"
   "</head>"
   "<body>"
   "<h1>Boiler del bagno</h1>";
 
-  html += "<h4>Ora: " + g_web_time.getDateTime() + "</h4>";
+  html += "<table><tr>";
+  html += "<td><b>Ora: " + g_web_time.getDateTime() + "</b></td>";
+  if (g_store_data.isDst()) {
+    html += "<td><button onclick=\"location.href='/toggle_dst'\">Clear DST</button></td>";
+  }
+  else {
+    html += "<td><button onclick=\"location.href='/toggle_dst'\">Set DST</button></td>";
+  }
+  html += "</tr></table>";
 
   // Temperatura
   char txt[64];
@@ -284,7 +328,7 @@ void handleRoot()
   }
   html += "Set Point : " + String(txt) + "&deg;C  </font>";
   html += "<button onclick=\"location.href='/setpoint_dec'\">- 1</button>";
-  html += "<button onclick=\"location.href='/setpoint_inc'\">+ 1</button></h3>";
+  html += "<button onclick=\"location.href='/setpoint_inc'\">+ 1</button>";
 
   // Tasti set point Doccia
   dtostrf(g_store_data.getSetPointDoccia(), 4, 1, txt);
@@ -438,6 +482,7 @@ void setup()
   server.on("/sch_doccia_set", prenotaDocciaSet);
   server.on("/sch_doccia_clr", prenotaDocciaClr);
   server.on("/reset_energy", resetEnergy);
+  server.on("/toggle_dst", toggleDst);
 
   server_ext.on("/", handleRoot);
   server_ext.on("/setpoint_inc", setpointInc);
@@ -447,6 +492,7 @@ void setup()
   server_ext.on("/sch_doccia_set", prenotaDocciaSet);
   server_ext.on("/sch_doccia_clr", prenotaDocciaClr);
   server_ext.on("/reset_energy", resetEnergy);
+  server_ext.on("/toggle_dst", toggleDst);
 
   // Avvio del server HTTP
   server.begin();
@@ -454,6 +500,9 @@ void setup()
 
   // Connessione alla rete WiFi
   WiFi.begin(ssid, password);
+  
+  // Imposta DST
+  g_web_time.setDst(g_store_data.isDst());
 }
 
 void loop()

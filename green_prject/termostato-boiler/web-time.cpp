@@ -9,7 +9,12 @@ WebTime::WebTime()
   m_client = new NTPClient(*m_net_udp);
 
   m_client->begin();
-  m_client->setTimeOffset(3600*2);
+  m_client->setTimeOffset(3600*1);
+}
+
+void WebTime::setDst(bool is_dst)
+{
+  m_client->setTimeOffset(3600*(is_dst ? 2 : 1));
 }
 
 String WebTime::getDateTime()

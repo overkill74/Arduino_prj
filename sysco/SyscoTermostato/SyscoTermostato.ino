@@ -15,6 +15,9 @@ DallasTemperature sensore(&oneWire);
 //--------------------------------------------------------------------------------
 void setup()
 {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);  // Tx
+
   //--------------------------------------
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
@@ -22,6 +25,7 @@ void setup()
   Serial.println("Welcome to Sysco Thermostat");
   pinMode(2, OUTPUT);
   digitalWrite(2, HIGH);  // Tx
+
   //--------------------------------------
   // Display
   // SyscoDisplay* dysp = SyscoDisplay::createInstance(0x3C, 128, 64);
@@ -39,6 +43,7 @@ void setup()
   sensore.begin();
   // pinMode(3, OUTPUT);
   // digitalWrite(3, HIGH);
+  digitalWrite(LED_BUILTIN, LOW);  // Tx
 }
 //--------------------------------------------------------------------------------
 void loop()
@@ -74,6 +79,7 @@ void loop()
   while(t.length() < 6) { t='0' + t; }
 
   digitalWrite(2, HIGH);  // Tx
+  digitalWrite(LED_BUILTIN, HIGH);  // Tx
   delay(10);
   Serial.println();
   delay(10);
@@ -85,6 +91,7 @@ void loop()
   Serial.println();
   delay(50);
   digitalWrite(2, LOW);  // Tx
+  digitalWrite(LED_BUILTIN, LOW);  // Tx
   //return;
 
   // SyscoDisplay* dysp = SyscoDisplay::getInstance();

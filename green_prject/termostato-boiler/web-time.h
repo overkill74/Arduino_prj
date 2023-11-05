@@ -10,6 +10,7 @@ public:
   WebTime();
 
   String getDateTime();
+  void setDst(bool is_dst);
 
 private:
   WiFiUDP*   m_net_udp=nullptr;
