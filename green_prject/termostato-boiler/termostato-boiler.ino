@@ -591,6 +591,39 @@ static void ctrl_led() {
   analogWrite(LED_PIN, led_phase ? 64 : 0);
 }
 
+///
+static void setup_server_cb(ESP8266WebServer& l_server)
+{
+  l_server.on("/", handleRoot);
+
+  l_server.on("/setpoint_inc", setpointInc);
+  l_server.on("/setpoint_inc_10", setpointInc_10);
+  l_server.on("/setpoint_inc__5", setpointInc_5);
+  l_server.on("/setpoint_inc__1", setpointInc_1);
+
+  l_server.on("/setpoint_dec", setpointDec);
+  l_server.on("/setpoint_dec_10", setpointDec_10);
+  l_server.on("/setpoint_dec__5", setpointDec_5);
+  l_server.on("/setpoint_dec__1", setpointDec_1);
+
+  l_server.on("/sp_doccia_inc"   , setpointDocciaInc);
+  l_server.on("/sp_doccia_inc_10", setpointDocciaInc_10);
+  l_server.on("/sp_doccia_inc__5", setpointDocciaInc_5);
+  l_server.on("/sp_doccia_inc__1", setpointDocciaInc_1);
+
+  l_server.on("/sp_doccia_dec"   , setpointDocciaDec);
+  l_server.on("/sp_doccia_dec_10", setpointDocciaDec_10);
+  l_server.on("/sp_doccia_dec__5", setpointDocciaDec_5);
+  l_server.on("/sp_doccia_dec__1", setpointDocciaDec_1);
+
+  l_server.on("/sch_doccia_set", prenotaDocciaSet);
+  l_server.on("/sch_doccia_clr", prenotaDocciaClr);
+  l_server.on("/reset_energy", resetEnergy);
+  l_server.on("/toggle_dst", toggleDst);
+
+}
+
+
 void setup() {
   Serial.begin(115200);
 
@@ -608,43 +641,9 @@ void setup() {
   digitalWrite(RELE_PIN, LOW);
 
   // Impostazione dei gestori per le richieste HTTP
-  server.on("/", handleRoot);
-
-  server.on("/setpoint_inc", setpointInc);
-  server.on("/setpoint_inc_10", setpointInc_10);
-  server.on("/setpoint_inc__5", setpointInc_5);
-  server.on("/setpoint_inc__1", setpointInc_1);
-
-  server.on("/setpoint_dec", setpointDec);
-  server.on("/setpoint_dec_10", setpointDec_10);
-  server.on("/setpoint_dec__5", setpointDec_5);
-  server.on("/setpoint_dec__1", setpointDec_1);
-
-  server.on("/sp_doccia_inc"   , setpointDocciaInc);
-  server.on("/sp_doccia_inc_10", setpointDocciaInc_10);
-  server.on("/sp_doccia_inc__5", setpointDocciaInc_5);
-  server.on("/sp_doccia_inc__1", setpointDocciaInc_1);
-
-  server.on("/sp_doccia_dec"   , setpointDocciaDec);
-  server.on("/sp_doccia_dec_10", setpointDocciaDec_10);
-  server.on("/sp_doccia_dec__5", setpointDocciaDec_5);
-  server.on("/sp_doccia_dec__1", setpointDocciaDec_1);
-
-  server.on("/sch_doccia_set", prenotaDocciaSet);
-  server.on("/sch_doccia_clr", prenotaDocciaClr);
-  server.on("/reset_energy", resetEnergy);
-  server.on("/toggle_dst", toggleDst);
-
-  server_ext.on("/", handleRoot);
-  server_ext.on("/setpoint_inc", setpointInc);
-  server_ext.on("/setpoint_dec", setpointDec);
-  server_ext.on("/sp_doccia_inc", setpointDocciaInc);
-  server_ext.on("/sp_doccia_dec", setpointDocciaDec);
-  server_ext.on("/sch_doccia_set", prenotaDocciaSet);
-  server_ext.on("/sch_doccia_clr", prenotaDocciaClr);
-  server_ext.on("/reset_energy", resetEnergy);
-  server_ext.on("/toggle_dst", toggleDst);
-
+  setup_server_cb(server);
+  setup_server_cb(server_ext);
+  
   // Avvio del server HTTP
   server.begin();
   server_ext.begin();
